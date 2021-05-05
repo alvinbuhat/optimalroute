@@ -1,0 +1,103 @@
+"""
+Created on Sun Jan 10 17:23:51 2021
+
+@author: destinylutero
+"""
+
+from gurobipy import *
+
+m=Model("Marinduque Tour DSML")
+
+R=np.arange(0,529,1)
+Pts_i=np.arange(0,23,1) #for index i
+Pts_j=np.arange(0,23,1) #for index j
+Pts_p=np.arange(0,23,1) #for index p, to be used for less confusion if i want to refer to nodes.
+
+#time parameters
+T={}
+T[0]=[0,13,8,12,	37,17,33,28,	41,41,41,41,	48,57,52,50,	71,21,5,	5,3,11,0]
+T[1]=[13	, 30, 20,	 0,	25,	5, 21, 15, 29, 29, 28, 29, 36, 47, 51, 54, 79, 33, 17, 16, 15, 23, 13]
+T[2]=[8, 20, 60,	20,	44,	24,	38,	35,	49,	49,	48,	49,	56,	62,	57,	55,	76,	26,	10,	10,	8,	16,	8]
+T[3]=[12	, 0, 20,	 15,	25,	5,	21,	15,	29,	29,	28,	29,	36,	46,	51,	54,	66,	32,	17,	16,	15,	22,	12]
+T[4]=[37	, 25, 44, 25, 60,	 25, 27,	 33, 29, 24, 19, 21, 25,	 35, 40, 43, 55, 57, 41, 41, 39,	 47, 37]
+T[5]=[17	, 5, 24, 5,	25,	15,	16,	10,	24,	24,	23,	24,	31,	41,	46,	49,	61,	37,	21,	21,	19,	27,	17]
+T[6]=[33	, 21, 38,	21,	27,	16,	30,	25,	45,	40,	39,	40,	48,	58,	71,	65,	79,	53,	38,	37,	36,	43,	33]
+T[7]=[28	, 15, 35, 15, 33, 10, 25,	60,	20,	15,	14,	15,	22,	32,	37,	40,	52,	48,	32,	31,	30,	38,	28]
+T[8]=[41, 29,	49,	29,	29,	24,	45,	20,	60,	5,	11,	12,	18,	29,	33,	36,	48,	61,	46,	45,	44,	51,	41]
+T[9]=[41, 29,	49,	29,	24,	24,	40,	15,	5,	60,	6,	7,	13,	24,	29,	31,	43,	60,	45,	45,	43,	51,	41]
+T[10]=[41,	28,	48,	28, 19,	23,	39, 14,	11,	6,	60,	2,	9,	20,	25,	27,	39,	56,	45,	44,	43,	51,	41]
+T[11]=[41,	29,	49,	29,	21,	24,	40,	15,	12,	7,	2,	15,	7,	18,	22,	25,	37,	53,	46,	45,	44,	51,	41]
+T[12]=[48,	36,	56,	36,	25,	31,	48,	22,	18,	13,	9,	7,	30,	11,	16,	19,	31,	47,	52,	52,	50,	58,	48]
+T[13]=[57,	47,	62,	46,	35,	41,	58,	32,	29,	24,	20,	18,	11,	60,	12,	8,	30,	36,	52,	52,	54,	59,	57]
+T[14]=[52,	51,	57,	51,	40,	46,	71,	37,	33,	29,	25,	22,	16,	12,	30,	7,	22,	31,	47,	48,	49,	54,	52]
+T[15]=[50,	54,	55,	54,	43,	49,	65,	40,	36,	31,	27,	25,	19,	8,	7,	60,	28,	29,	45,	45,	47,	51,	50]
+T[16]=[71,	79,	76,	66,	55,	61,	79,	52,	48,	43,	39,	37,	31,	30,	22,	28,	30, 50,	66,	66,	68,	72,	71]
+T[17]=[21,	33,	26,	32,	57,	37,	53,	48,	61,	60,	56,	53,	47,	36,	31,	29,	50,	60,	16,	16,	18,	22,	21]
+T[18]=[5	, 17,	10,	17,	41,	21,	38,	32,	46,	45,	45,	46,	52,	52,	47,	45,	66,	16,	15,	0,	2,	7,	5]
+T[19]=[5,	16,	10,	16,	41,	21,	37,	31,	45,	45,	44,	45,	52,	52,	48,	45,	66,	16,	0,  30,	2,	6,	5]
+T[20]=[3	,  15,	8,	15,	39,	19,	36,	30,	44,	43,	43,	44,	50,	54,	49,	47,	68,	18,	2,	2,	30,	8,	3]
+T[21]=[11,	23,	16,	22,	47,	27,	43,	38,	51,	51,	51,	51,	58,	59,	54,	51,	72,	22,	7,	6,	8,	60, 11]
+T[22]=[0	, 13,	8,	12,	37,	17,	33,	28,	41,	41,	41,	41,	48,	57,	52,	50,	71,	21,	5,	5,	3,	11,	0]
+
+
+#nodes under the themed-tours
+hist=[1,6,14]
+church=[3,5,11,18]
+water=[4,10,15,17]
+nature=[12,16,19,20]
+cave=[2,7,8,9,13,21]
+
+
+time={}
+for i in Pts_i:
+    for j in Pts_j:
+        time[i,j]=T[i][j]
+x={}
+for i in Pts_i:
+    for j in Pts_j:
+        x[i,j]=m.addVar(vtype=GRB.BINARY)
+d={}
+for i in Pts_i:
+    d[i]=m.addVar(vtype=GRB.BINARY)    
+    
+def subtourelim(subtour):
+    psum=0
+    for i in range(len(subtour)):
+        psum=psum+x[ subtour[i%len(subtour)], subtour[(i+1)%len(subtour)] ]
+    return psum
+
+def revsubtourelim(subtour):
+    psum=0
+    for i in range(len(subtour)):
+        psum=psum+x[ subtour[(i+1)%len(subtour)], subtour[(i)%len(subtour)] ]
+    return psum
+
+
+#Set Objective
+m.setObjective(quicksum(x[p,p] for p in Pts_p), GRB.MAXIMIZE)
+
+#Subtour Elim Constraints
+#m.addConstr( subtourelim(subtour1) <= len(subtour1)-1 )
+#m.addConstr( subtourelim(subtour2) <= len(subtour2)-1 )
+#m.addConstr( subtourelim(subtour3) <= len(subtour3)-1 )
+#m.addConstr( revsubtourelim(subtour1) <= len(subtour1)-1 )
+#m.addConstr( revsubtourelim(subtour2) <= len(subtour2)-1 )
+#m.addConstr( revsubtourelim(subtour3) <= len(subtour3)-1 )
+
+#Set constraints
+for i in Pts_i:
+    for j in Pts_j:
+        if i<j:
+            m.addConstr( x[i,j]+x[j,i] <= 1 )
+            
+for j in Pts_j:
+    m.addConstr( quicksum( x[i,j] for i in Pts_i ) - 2*x[j,j] == 0 )   
+for i in Pts_i:
+    m.addConstr( quicksum( x[i,j] for j in Pts_j ) - 2*x[i,i] == 0 )
+
+m.addConstr( x[0,22] + x[22,0] == 0)
+m.addConstr( x[0,0] + x[22,22] == 1)
+
+m.addConstr( quicksum( 1*time[i,j]*x[i,j] for i in Pts_i for j in Pts_j) - quicksum(0*time[i,i]*x[i,i] for i in Pts_i) <= 480 )
+   
+m.optimize()
